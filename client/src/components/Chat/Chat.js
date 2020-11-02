@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import queryString from "query-string";
 import io from "socket.io-client";
-import "./Chat.css";
+import TextContainer from "../TextContainer/TextContainer";
+import Messages from "../Messages/Messages";
 import InfoBar from "../InfoBar/InfoBar";
 import Input from "../Input/Input";
-import Messages from "../Messages/Messages";
-import TextContainer from "../TextContainer/TextContainer";
+
+import "./Chat.css";
+
+const ENDPOINT = "https://react-simple-chat-application.herokuapp.com/";
 
 let socket;
 
@@ -16,26 +19,24 @@ const Chat = ({ location }) => {
 	const [message, setMessage] = useState("");
 	const [messages, setMessages] = useState([]);
 
-	const ENDPOINT = "localhost:5000";
-
 	useEffect(() => {
 		const { name, room } = queryString.parse(location.search);
 
 		socket = io(ENDPOINT);
-		setName(name);
+
 		setRoom(room);
+		setName(name);
 
-		socket.emit("join", { name, room }, () => {});
-
-		return () => {
-			socket.emit("disconnect");
-			socket.off();
-		};
-	}, [ENDPOINT, location.search]);
+		socket.emit("join", { name, room }, (error) => {
+			if (error) {
+				alert(error);
+			}
+		});
+	}, [location.search]);
 
 	useEffect(() => {
 		socket.on("message", (message) => {
-			setMessages([...messages, message]);
+			setMessages((messages) => [...messages, message]);
 		});
 
 		socket.on("roomData", ({ users }) => {
@@ -43,7 +44,6 @@ const Chat = ({ location }) => {
 		});
 	}, []);
 
-	// function fot sending messages
 	const sendMessage = (event) => {
 		event.preventDefault();
 
